@@ -1,2 +1,2 @@
-# grpc-persona-crud-example
+# go-person-crud-example
 Example of CRUD with gRPC
