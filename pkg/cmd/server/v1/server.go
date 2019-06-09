@@ -10,7 +10,6 @@ import (
 )
 
 type Config struct {
-
 	GRPCPort string
 	DatastoreDBHost string
 	DatastoreDBUser string

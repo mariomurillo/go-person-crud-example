@@ -11,7 +11,7 @@ import (
 )
 
 type Config struct {
-
+	HTTPPort string
 	DatastoreDBHost string
 	DatastoreDBUser string
 	DatastoreDBPassword string
@@ -20,6 +20,7 @@ type Config struct {
 
 func RunServer() error {
 	cfg := Config{
+		HTTPPort: "9091",
 		DatastoreDBHost: "localhost:3306",
 		DatastoreDBSchema: "mydatabase",
 		DatastoreDBUser: "root",
@@ -56,5 +57,5 @@ func RunServer() error {
 	group.PUT("/:api/:id", handler.Upddate)
 	group.DELETE("/:api/:id", handler.Delete)
 
-	return engine.Run()
+	return engine.Run(":"+cfg.HTTPPort)
 }
