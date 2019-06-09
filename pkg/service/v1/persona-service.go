@@ -64,13 +64,13 @@ func (s *PersonaServiceServer) Create(ctx context.Context, request *v1.CreateReq
 		request.Persona.Name, birthdate)
 
 	if err != nil {
-		return nil, status.Error(codes.Unknown, "Failed to insert into Persona-> "+err.Error())
+		return nil, status.Error(codes.Unknown, "Failed to insert into Person-> "+err.Error())
 	}
 
 	id, err := result.LastInsertId()
 
 	if err != nil {
-		return nil, status.Error(codes.Unknown, "Failed to retrieve id for created Persona-> "+err.Error())
+		return nil, status.Error(codes.Unknown, "Failed to retrieve id for created Person-> "+err.Error())
 	}
 
 	return &v1.CreateResponse{
@@ -93,12 +93,12 @@ func (s *PersonaServiceServer) Read(ctx context.Context, request *v1.ReadRequest
 		request.Id)
 
 	if err != nil {
-		return nil, status.Error(codes.Unknown, "Failed to select from Persona-> "+err.Error())
+		return nil, status.Error(codes.Unknown, "Failed to select from Person-> "+err.Error())
 	}
 
 	if !rows.Next() {
 		if err := rows.Err(); err != nil {
-			return nil, status.Error(codes.Unknown, "Failed to select from Persona-> "+err.Error())
+			return nil, status.Error(codes.Unknown, "Failed to select from Person-> "+err.Error())
 		}
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("ToDo with ID='%d' is not found", request.Id))
 	}
@@ -107,14 +107,14 @@ func (s *PersonaServiceServer) Read(ctx context.Context, request *v1.ReadRequest
 	var birthdate time.Time
 
 	if err := rows.Scan(&p.Id, &p.Name, &birthdate); err != nil {
-		return nil, status.Error(codes.Unknown, "Failed to retrieve field values from Persona row-> "+err.Error())
+		return nil, status.Error(codes.Unknown, "Failed to retrieve field values from Person row-> "+err.Error())
 	}
 	p.Birthdate, err = ptypes.TimestampProto(birthdate)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Birthdate field has invalid format-> "+err.Error())
 	}
 	if rows.Next() {
-		return nil, status.Error(codes.Unknown, fmt.Sprintf("Found multiple Persona rows with ID='%d'",
+		return nil, status.Error(codes.Unknown, fmt.Sprintf("Found multiple Person rows with ID='%d'",
 			request.Id))
 	}
 	return &v1.ReadResponse{
@@ -124,13 +124,116 @@ func (s *PersonaServiceServer) Read(ctx context.Context, request *v1.ReadRequest
 }
 
 func (s *PersonaServiceServer) Update(ctx context.Context, request *v1.UpdateRequest) (*v1.UpdateResponse, error) {
-	panic("implement me")
+	if err := s.checkApi(request.Api); err != nil {
+		return nil, err
+	}
+	conn, err := s.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	var birthdate time.Time
+
+	if request.Persona.Birthdate != nil {
+		birthdate, err = ptypes.Timestamp(request.Persona.Birthdate)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "Birthdate field has invalid format-> "+err.Error())
+		}
+	}
+
+	result, err := conn.ExecContext(ctx, "UPDATE `mydatabase`.`Person` SET `name` = ?, `birthdate` = ? WHERE `id` = ?",
+		request.Persona.Name, birthdate, request.Persona.Id)
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, "Failed to update into Person-> "+err.Error())
+	}
+
+	rowsAffected, err := result.RowsAffected()
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, "Failed to retrieve rows affected value-> "+err.Error())
+	}
+	if rowsAffected == 0 {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("Person with ID='%d' is not found",
+			request.Persona.Id))
+	}
+	return &v1.UpdateResponse{
+		Api: apiVersion,
+		Updated: rowsAffected,
+	}, nil
 }
 
 func (s *PersonaServiceServer) Delete(ctx context.Context, request *v1.DeleteRequest) (*v1.DeleteResponse, error) {
-	panic("implement me")
+	if err := s.checkApi(request.Api); err != nil {
+		return nil, err
+	}
+	conn, err := s.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	result, err := conn.ExecContext(ctx, "DELETE FROM `mydatabase`.`Person` WHERE `id` = ?",
+		request.Id)
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, "Failed to delete into Person-> "+err.Error())
+	}
+
+	rowsAffected, err := result.RowsAffected()
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, "Failed to retrieve rows affected value-> "+err.Error())
+	}
+	if rowsAffected == 0 {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("Person with ID='%d' is not found",
+			request.Id))
+	}
+	return &v1.DeleteResponse{
+		Api: apiVersion,
+		Deleted: rowsAffected,
+	}, nil
 }
 
 func (s *PersonaServiceServer) ReadAll(ctx context.Context, request *v1.ReadAllRequest) (*v1.ReadAllResponse, error) {
-	panic("implement me")
+	if err := s.checkApi(request.Api); err != nil {
+		return nil, err
+	}
+	conn, err := s.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	rows, err := conn.QueryContext(ctx, "SELECT `id`, `name`, `birthdate` FROM mydatabase.Person")
+
+	if err != nil {
+		return nil, status.Error(codes.Unknown, "Failed to select from Person-> "+err.Error())
+	}
+
+	var birthdate time.Time
+	people := []*v1.Person{}
+
+	for rows.Next() {
+		person := new(v1.Person)
+
+		if err := rows.Scan(&person.Id, &person.Name, &birthdate); err != nil {
+			return nil, status.Error(codes.Unknown, "Failed to retrieve field values from Person row-> "+err.Error())
+		}
+		person.Birthdate, err = ptypes.TimestampProto(birthdate)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "Birthdate field has invalid format-> "+err.Error())
+		}
+
+		people = append(people, person)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, status.Error(codes.Unknown, "Failed to retrieve data from Person-> "+err.Error())
+	}
+	return &v1.ReadAllResponse{
+		Api: apiVersion,
+		People: people,
+	}, nil
 }

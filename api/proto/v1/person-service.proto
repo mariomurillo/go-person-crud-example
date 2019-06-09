@@ -78,7 +78,7 @@ message ReadAllResponse {
 
     string api = 1;
 
-    repeated Person persons = 2;
+    repeated Person people = 2;
 }
 
 service PersonaService {
