@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"grpc-persona-crud-example/pkg/protocol/grpc"
-	v1 "grpc-persona-crud-example/pkg/service/v1"
+	"go-person-crud-example/pkg/protocol/grpc"
+	v1 "go-person-crud-example/pkg/service/v1"
 )
 
 type Config struct {

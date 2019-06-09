@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"context"
+	v1 "go-person-crud-example/pkg/api/v1"
 	"google.golang.org/grpc"
-	v1 "grpc-persona-crud-example/pkg/api/v1"
 	"log"
 	"net"
 	"os"

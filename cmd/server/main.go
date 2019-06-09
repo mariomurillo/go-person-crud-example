@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"grpc-persona-crud-example/pkg/cmd/server"
+	"go-person-crud-example/pkg/cmd/server"
 	"os"
 )
 

@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/golang/protobuf/ptypes"
+	"go-person-crud-example/pkg/api/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"grpc-persona-crud-example/pkg/api/v1"
 	"time"
 )
 
