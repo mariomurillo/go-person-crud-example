@@ -1,2 +1,2 @@
 # go-person-crud-example
-Example of CRUD with gRPC
+Example of CRUD with gRPC and HTTP
